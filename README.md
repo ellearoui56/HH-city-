@@ -22,7 +22,7 @@ ZZ CityGen is a smart procedural world and city generator for Unity. It is desig
 2. Add a `ZZCityGen.Generation.WorldGenerator` component to a scene object, or use **Tools > ZZ CityGen > World Generator**.
 3. Tune the `WorldGenerationSettings` values in the Inspector.
 4. Click each generation stage independently or click **Generate Complete World**.
-5. Assign an optional `AssetCatalog` to use your own prefabs with footprint-aware lot placement.
+5. Assign an optional `AssetCatalog` to use your own prefabs with footprint-aware lot placement. For real CC0 assets, open **Tools > ZZ CityGen > Assets > Real 3D Asset Dashboard**, import the packs, then assign the generated `ZZCityGenRealPrefabDatabase.asset` or use the dashboard assignment action.
 
 ## Folder Layout
 

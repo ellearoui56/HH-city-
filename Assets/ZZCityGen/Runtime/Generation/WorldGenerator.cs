@@ -43,6 +43,14 @@ namespace ZZCityGen.Generation
 
         public WorldGenerationSettings Settings => settings;
         public MasterPlan CurrentPlan => currentPlan;
+        public AssetCatalog AssetCatalog => assetCatalog;
+        public PrefabDatabase PrefabDatabase => prefabDatabase;
+
+        public void SetAssetLibraries(PrefabDatabase prefabDatabaseAsset, AssetCatalog assetCatalogAsset)
+        {
+            prefabDatabase = prefabDatabaseAsset;
+            assetCatalog = assetCatalogAsset;
+        }
 
         public void GenerateMasterPlan()
         {
