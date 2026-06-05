@@ -1,0 +1,17 @@
+{
+    "name": "ZZCityGen.Planning.TerrainGeneration",
+    "rootNamespace": "ZZCityGen.Planning.TerrainGeneration",
+    "references": [
+        "ZZCityGen.Runtime",
+        "ZZCityGen.Planning.MasterPlanning"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
