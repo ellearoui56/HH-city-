@@ -2,8 +2,7 @@
     "name": "ZZCityGen.Planning.TerrainGeneration",
     "rootNamespace": "ZZCityGen.Planning.TerrainGeneration",
     "references": [
-        "ZZCityGen.Runtime",
-        "ZZCityGen.Planning.MasterPlanning"
+        "ZZCityGen.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

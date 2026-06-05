@@ -2,7 +2,11 @@ using UnityEngine;
 using UnityEditor;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
+using ZZCityGen.Data;
+using ZZCityGen.Planning.CityGeneration;
 using ZZCityGen.Planning.MasterPlanning;
+using ZZCityGen.Planning.TerrainGeneration.RoadNetworkGeneration;
 
 namespace ZZCityGen.Planning.TerrainGeneration.Editor
 {
@@ -25,6 +29,10 @@ namespace ZZCityGen.Planning.TerrainGeneration.Editor
 
         // نتائج التوليد
         private TerrainGenerationData lastGeneratedTerrain = null;
+        private RoadNetworkPlan lastGeneratedRoadNetwork = null;
+        private TransportationAnalysisData lastGeneratedTransportAnalysis = null;
+        private CityGenerationPackage lastGeneratedCityData = null;
+        private UrbanAnalysisData lastGeneratedUrbanAnalysis = null;
         private TerrainAnalysisData lastGeneratedAnalysis = null;
         private List<string> generationLog = new List<string>();
 
@@ -115,6 +123,32 @@ namespace ZZCityGen.Planning.TerrainGeneration.Editor
             GUI.backgroundColor = Color.white;
             GUI.enabled = true;
 
+            GUILayout.Space(5);
+
+            if (lastGeneratedTerrain != null)
+            {
+                GUI.backgroundColor = Color.green;
+                if (GUILayout.Button("توليد شبكة الطرق", GUILayout.Height(32)))
+                {
+                    StartRoadNetworkGeneration();
+                }
+
+                if (lastGeneratedRoadNetwork != null)
+                {
+                    GUI.backgroundColor = Color.cyan;
+                    if (GUILayout.Button("توليد تخطيط المدن", GUILayout.Height(32)))
+                    {
+                        StartCityGeneration();
+                    }
+                }
+
+                GUI.backgroundColor = Color.white;
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("قم أولاً بتوليد التضاريس ثم استخدم زر شبكة الطرق.", MessageType.Info);
+            }
+
             GUILayout.Space(10);
 
             // ============================================
@@ -168,6 +202,15 @@ namespace ZZCityGen.Planning.TerrainGeneration.Editor
                 GUILayout.Label($"تغطية الماء: {lastGeneratedTerrain.waterCoverage:P}");
                 GUILayout.Label($"تغطية الغابات: {lastGeneratedTerrain.forestCoverage:P}");
                 GUILayout.Label($"تغطية الجبال: {lastGeneratedTerrain.mountainCoverage:P}");
+
+                if (lastGeneratedRoadNetwork != null)
+                {
+                    GUILayout.Space(5);
+                    GUILayout.Label("شبكة الطرق", EditorStyles.boldLabel);
+                    GUILayout.Label($"الطرق السريعة: {lastGeneratedRoadNetwork.Highways.Count}");
+                    GUILayout.Label($"الجسور: {lastGeneratedRoadNetwork.Bridges.Count}");
+                    GUILayout.Label($"الأنفاق: {lastGeneratedRoadNetwork.Tunnels.Count}");
+                }
 
                 EditorGUI.indentLevel--;
                 GUILayout.Space(10);
@@ -242,6 +285,138 @@ namespace ZZCityGen.Planning.TerrainGeneration.Editor
             {
                 AddLog($"✗ خطأ: {ex.Message}");
                 generationStatus = $"✗ خطأ في التوليد:\n{ex.Message}";
+            }
+            finally
+            {
+                isGenerating = false;
+            }
+        }
+
+        private void StartRoadNetworkGeneration()
+        {
+            isGenerating = true;
+            generationLog.Clear();
+            generationStatus = "جاري توليد شبكة الطرق...";
+
+            try
+            {
+                AddLog("جاري تحميل Master Plan...\n");
+                var masterPlan = MasterPlanSaveLoadUtility.LoadMasterPlanData(masterPlanPath);
+                if (masterPlan == null)
+                {
+                    throw new Exception("فشل تحميل Master Plan. تحقق من المسار.");
+                }
+
+                AddLog("✓ Master Plan محمل بنجاح");
+
+                if (lastGeneratedTerrain == null)
+                {
+                    throw new Exception("لا توجد بيانات تضاريس صالحة. يرجى توليد التضاريس أولاً.");
+                }
+
+                AddLog("جاري تحليل التضاريس لبناء شبكة الطرق...");
+                string terrainAnalysisPath = TerrainSaveLoadUtility.GetTerrainAnalysisPath();
+                var terrainAnalysis = TerrainSaveLoadUtility.LoadTerrainAnalysis(terrainAnalysisPath);
+
+                if (terrainAnalysis == null)
+                {
+                    AddLog("⚠️ لا يوجد TerrainAnalysis.json، سيتم استخدام تقديرات التضاريس الافتراضية.");
+                }
+
+                var roadBuilder = new RoadNetworkBuilder(masterPlan, lastGeneratedTerrain, terrainAnalysis);
+                var transportAnalysis = new TransportationAnalysisData();
+                lastGeneratedRoadNetwork = roadBuilder.BuildRoadNetwork(out transportAnalysis, terrainAnalysis);
+                lastGeneratedTransportAnalysis = transportAnalysis;
+
+                if (lastGeneratedRoadNetwork == null)
+                {
+                    throw new Exception("فشل بناء شبكة الطرق.");
+                }
+
+                AddLog($"✓ شبكة الطرق تم إنشاؤها: {lastGeneratedRoadNetwork.Highways.Count} طرق سريعة، {lastGeneratedRoadNetwork.Railways.Count} سكك حديد، {lastGeneratedRoadNetwork.FreightCorridors.Count} ممرات شحن، {lastGeneratedRoadNetwork.Bridges.Count} جسور، {lastGeneratedRoadNetwork.Tunnels.Count} أنفاق");
+
+                if (RoadNetworkSaveLoadUtility.SaveRoadNetwork(lastGeneratedRoadNetwork, outputPath))
+                {
+                    AddLog($"✓ حفظت شبكة الطرق إلى: {System.IO.Path.Combine(outputPath, "RoadNetwork.json")} ");
+                }
+
+                if (RoadNetworkSaveLoadUtility.SaveTransportationAnalysis(transportAnalysis, outputPath))
+                {
+                    AddLog($"✓ حفظت تحليل النقل إلى: {System.IO.Path.Combine(outputPath, "TransportationAnalysis.json")} ");
+                }
+
+                if (MasterPlanSaveLoadUtility.SaveMasterPlanData(masterPlan, outputPath))
+                {
+                    AddLog($"✓ تم تحديث Master Plan وتحفظه مع مخطط شبكة النقل: {System.IO.Path.Combine(outputPath, "MasterPlanData.json")} ");
+                }
+
+                generationStatus = $"✓ شبكة الطرق نجحت!\n{lastGeneratedRoadNetwork.Highways.Count} طرق سريعة | {lastGeneratedRoadNetwork.Railways.Count} سكك حديد | {lastGeneratedRoadNetwork.Bridges.Count} جسور | {lastGeneratedRoadNetwork.Tunnels.Count} أنفاق";
+            }
+            catch (Exception ex)
+            {
+                AddLog($"✗ خطأ شبكة الطرق: {ex.Message}");
+                generationStatus = $"✗ خطأ في توليد شبكة الطرق:\n{ex.Message}";
+            }
+            finally
+            {
+                isGenerating = false;
+            }
+        }
+
+        private void StartCityGeneration()
+        {
+            isGenerating = true;
+            generationLog.Clear();
+            generationStatus = "جاري توليد تخطيط المدن...";
+
+            try
+            {
+                AddLog("جاري تحميل Master Plan...");
+                var masterPlan = MasterPlanSaveLoadUtility.LoadMasterPlanData(masterPlanPath);
+                if (masterPlan == null)
+                {
+                    throw new Exception("فشل تحميل Master Plan. تحقق من المسار.");
+                }
+
+                AddLog($"✓ Master Plan محمل بنجاح ({masterPlan.cities.Count} مدن)");
+
+                if (lastGeneratedRoadNetwork == null)
+                {
+                    var networkPath = System.IO.Path.Combine(outputPath, "RoadNetwork.json");
+                    if (System.IO.File.Exists(networkPath))
+                    {
+                        AddLog("جاري تحميل شبكة الطرق السابقة من التخزين...");
+                        lastGeneratedRoadNetwork = RoadNetworkSaveLoadUtility.LoadRoadNetwork(networkPath);
+                    }
+                }
+
+                if (lastGeneratedRoadNetwork == null)
+                {
+                    AddLog("⚠️ لا توجد شبكة طرق جاهزة. سيتم توليد تخطيط المدن بدون شبكة داخلية كاملة.");
+                }
+
+                var cityBuilder = new CityGenerationBuilder(masterPlan, lastGeneratedRoadNetwork, lastGeneratedTransportAnalysis);
+                var cityPackage = cityBuilder.BuildCityLayouts(out var urbanAnalysis);
+
+                lastGeneratedCityData = cityPackage;
+                lastGeneratedUrbanAnalysis = urbanAnalysis;
+
+                if (CityGenerationSaveLoadUtility.SaveCityData(cityPackage, outputPath))
+                {
+                    AddLog($"✓ حفظت CityData إلى: {System.IO.Path.Combine(outputPath, "CityData.json")} ");
+                }
+
+                if (CityGenerationSaveLoadUtility.SaveUrbanAnalysis(urbanAnalysis, outputPath))
+                {
+                    AddLog($"✓ حفظت UrbanAnalysis إلى: {System.IO.Path.Combine(outputPath, "UrbanAnalysis.json")} ");
+                }
+
+                generationStatus = $"✓ تخطيط المدن اكتمل!\n{cityPackage.cities.Count} مدن مخططة";
+            }
+            catch (Exception ex)
+            {
+                AddLog($"✗ خطأ في تخطيط المدن: {ex.Message}");
+                generationStatus = $"✗ خطأ في توليد تخطيط المدن:\n{ex.Message}";
             }
             finally
             {

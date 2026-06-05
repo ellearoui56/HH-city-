@@ -31,7 +31,7 @@ namespace ZZCityGen.Planning.TerrainGeneration.Generators
             var forests = new System.Collections.Generic.List<ForestRegionData>();
 
             // الغابات توضع بعيداً عن المدن، لكن قريبة من الأنهار والمياه
-            int forestCount = Mathf.RoundToInt(masterPlan.worldBounds.GetArea() / (50 * 50));  // غابة كل 50x50 كم
+            int forestCount = Mathf.RoundToInt(masterPlan.worldBounds.areaSquareKm / (50 * 50));  // غابة كل 50x50 كم
 
             for (int i = 0; i < forestCount; i++)
             {

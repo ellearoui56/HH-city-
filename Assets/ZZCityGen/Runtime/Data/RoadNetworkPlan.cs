@@ -10,10 +10,24 @@ namespace ZZCityGen.Data
         public List<HighwayPlan> Highways = new List<HighwayPlan>();
         public List<BridgePlan> Bridges = new List<BridgePlan>();
         public List<TunnelPlan> Tunnels = new List<TunnelPlan>();
+        public List<RailwayPlan> Railways = new List<RailwayPlan>();
+        public List<FreightCorridorPlan> FreightCorridors = new List<FreightCorridorPlan>();
         public List<StreetSegmentPlan> MainStreets = new List<StreetSegmentPlan>();
         public List<StreetSegmentPlan> SecondaryStreets = new List<StreetSegmentPlan>();
         public List<IntersectionPlan> Intersections = new List<IntersectionPlan>();
         public List<RoundaboutPlan> Roundabouts = new List<RoundaboutPlan>();
+    }
+
+    [Serializable]
+    public sealed class FreightCorridorPlan
+    {
+        public string name;
+        public Vector2 from;
+        public Vector2 to;
+        public float lengthMeters;
+        public int laneCount;
+        public float capacityTonsPerDay;
+        public string priorityTier;
     }
 
     [Serializable]
@@ -25,6 +39,9 @@ namespace ZZCityGen.Data
         public float lengthMeters;
         public bool requiresBridge;
         public bool requiresTunnel;
+        public int laneCount;
+        public string roadClass;
+        public float projectedDailyTraffic;
     }
 
     [Serializable]
@@ -61,7 +78,21 @@ namespace ZZCityGen.Data
     {
         public string name;
         public Vector2 position;
+        public string intersectionType;
         public List<string> connectedSegments = new List<string>();
+    }
+
+    [Serializable]
+    public sealed class RailwayPlan
+    {
+        public string name;
+        public Vector2 from;
+        public Vector2 to;
+        public float lengthMeters;
+        public bool isHighPriority;
+        public bool isBackupRoute;
+        public float estimatedTravelTimeMinutes;
+        public float projectedFreightCapacity;
     }
 
     [Serializable]

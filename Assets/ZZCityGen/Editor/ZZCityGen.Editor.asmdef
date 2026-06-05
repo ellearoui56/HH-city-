@@ -2,7 +2,8 @@
   "name": "ZZCityGen.Editor",
   "rootNamespace": "ZZCityGen.Editor",
   "references": [
-    "ZZCityGen.Runtime"
+    "ZZCityGen.Runtime",
+    "ZZCityGen.Planning.TerrainGeneration"
   ],
   "includePlatforms": [
     "Editor"

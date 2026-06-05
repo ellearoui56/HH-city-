@@ -310,7 +310,7 @@ namespace ZZCityGen.Planning.TerrainGeneration
                 return;
             }
 
-            Debug.Log($"[Example 7] Master plan loaded: {masterPlan.cities.Count} cities, world size {masterPlan.worldBounds.GetArea()}");
+            Debug.Log($"[Example 7] Master plan loaded: {masterPlan.cities.Count} cities, world size {masterPlan.worldBounds.areaSquareKm:F2} km²");
 
             // الخطوة 2: توليد التضاريس
             Debug.Log("[Example 7] Step 2: Generating terrain...");
